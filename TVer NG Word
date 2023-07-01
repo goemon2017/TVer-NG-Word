@@ -1,0 +1,96 @@
+// ==UserScript==
+// @name         TVer NG Word
+// @namespace    http://tampermonkey.net/
+// @version      0.1
+// @description  try to take over the world!
+// @author       goemon
+// @match        https://tver.jp/tags/*
+// @icon         data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==
+// @grant        GM_registerMenuCommand
+// @grant        GM_setValue
+// @grant        GM_getValue
+// @grant        GM_listValues
+// @grant        GM_deleteValue
+// ==/UserScript==
+
+(function() {
+    'use strict';
+    initHijack();
+//NG Word in title
+    const titleNG=[
+"aaaaaaaaaa","bbbbbbbbbbbbbb"
+];
+//NG Word in description
+    const descriptionNG=/(aaaaaaaaaaaa|bbbbbbbbbbbb)/;
+    const sereiseNG=/(here is sereiseNG)/;//
+    const showlog=true;
+
+    function initHijack() {
+        var realOpen = window.XMLHttpRequest.prototype.open;
+        window.XMLHttpRequest.prototype.open = hijackedOpen;
+
+        function hijackedOpen() {
+            var url = arguments['1'];
+            if (isTargetURL(url)) {
+                this.addEventListener('readystatechange', function(e) {
+                    if (this.readyState === 4) {
+                        var originalText = e.target.responseText;
+                        var modifiedText = JSON.stringify(deleteNGEntry(originalText));
+                        Object.defineProperty(this, 'response', {writable: true});
+                        Object.defineProperty(this, 'responseText', {writable: true});
+                        this.response = this.responseText = modifiedText;
+                    }
+                });
+            }
+            return realOpen.apply(this, arguments);
+        };
+
+        function isTargetURL(url) {
+            var reg = new RegExp(/^https:\/\/platform-api.tver.jp\/service\/api\/v1\/callTagSearch\//, 'i') ;
+            return reg.test(url);
+        }
+
+        function deleteNGEntry(text) {
+            var json = JSON.parse(text);
+            var reg = new RegExp("("+titleNG.join("|")+")", 'm');
+            var reg2 = new RegExp(descriptionNG, 'm');
+            var reg3 = new RegExp(sereiseNG, 'm');
+            var obj=json.result.contents;
+            var deletecount=0;
+            for (var i=0;i<obj.length;i++){
+                if (reg.test(obj[i].content.seriesTitle)){
+                    if (showlog){console.log("TVer NG : No.="+i+" id="+obj[i].content.id+" seriesTitle="+obj[i].content.seriesTitle/*+" title="+obj[i].content.title.slice(0,10)*/);}
+                    obj.splice(i,1);
+                    deletecount++;
+                    i--
+                }else if (reg2.test(obj[i].content.title)){
+                    if(showlog){console.log("TVer NG : No.="+i+" id="+obj[i].content.id+" seriesTitle="+obj[i].content.seriesTitle.slice(0,10)+" title="+obj[i].content.title);}
+                    obj.splice(i,1);
+                    deletecount++;
+                    i--
+                }else if(reg3.test(obj[i].content.seriesID)){
+                    if (showlog){console.log("TVer NG : No.="+i+" id="+obj[i].content.id+" seriesTitle="+obj[i].content.seriesTitle.slice(0,10)+" seriesID="+obj[i].content.seriesID);}
+                    obj.splice(i,1);
+                    deletecount++;
+                    i--
+                }
+            }
+            console.log("TVer NG : total count="+deletecount);
+            showDeleteCount(deletecount);
+            return json;
+        }
+
+        function showDeleteCount(deletecount){
+            var s,d;
+            s=document.createElement("span");
+            s.style.position="absolute";
+            s.style.top=0;
+            s.style.right="50%";
+            d=document.querySelector("div[class*='search-page-main_content__']")
+            d.style.position="relative";
+            s.textContent="TVer NG Word : -"+deletecount;
+            d.appendChild(s);
+        }
+    }
+
+})();
