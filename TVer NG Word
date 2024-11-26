@@ -46,7 +46,7 @@
         };
 
         function isTargetURL(url) {
-            var reg = new RegExp(/^https:\/\/platform-api.tver.jp\/service\/api\/v1\/callTagSearch\//, 'i') ;
+            var reg = new RegExp(/^https:\/\/(cf-)?platform-api.tver.jp\/service\/api\/v1\/callTagSearch\//, 'i') ;
             return reg.test(url);
         }
 
