@@ -1,3 +1,3 @@
 # TVer-NG-Word
-TVer 2023-07/01
-Tampermonkey 4.19.0
+TVer 2024-11-26
+Tampermonkey 5.3.2
